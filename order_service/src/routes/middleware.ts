@@ -12,8 +12,8 @@ export const RequestAuthorizer = async (
       .status(403)
       .json({ error: "Unauthorized due to authorization token missing!" });
   }
+
   const userData = await validateUser(req.headers.authorization as string);
-  console.log("user", userData);
   req.user = userData;
   next();
 };

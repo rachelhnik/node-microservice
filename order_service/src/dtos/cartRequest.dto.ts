@@ -14,6 +14,13 @@ export const EditRequestSchema = Type.Object({
 
 export type EditRequestInput = Static<typeof EditRequestSchema>;
 
+export const UpdateRequestBodySchema = Type.Object({
+  qty: Type.Integer(),
+  lineItemId: Type.Integer(),
+});
+
+export type UpdateRequestBodyInput = Static<typeof UpdateRequestBodySchema>;
+
 export type CartLineItem = {
   id: number;
   productId: number;

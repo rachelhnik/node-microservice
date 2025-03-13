@@ -2,8 +2,13 @@ import express, { NextFunction, Request, Response } from "express";
 import * as service from "../service/cart.service";
 import * as repository from "../respository/cart.repository";
 import { ValidateRequest } from "../utils/validator";
-import { CartRequestSchema, CreateRequestInput } from "../dtos/cartRequest.dto";
-import { AuthorizationError } from "../utils/errors";
+import {
+  CartRequestSchema,
+  CreateRequestInput,
+  UpdateRequestBodyInput,
+  UpdateRequestBodySchema,
+} from "../dtos/cartRequest.dto";
+import { AuthorizationError, ValidationError } from "../utils/errors";
 import { RequestAuthorizer } from "./middleware";
 
 const router = express.Router();
@@ -44,7 +49,7 @@ router.post(
       );
 
       if (error) {
-        res.status(400).json({ error });
+        next(new ValidationError("Invalid request inputs."));
       }
 
       const input: CreateRequestInput = req.body;
@@ -73,16 +78,26 @@ router.patch(
         next(new Error("User not found"));
         return;
       }
-      const liteItemId = req.params.id;
-      const response = await service.UpdateCart(
-        {
-          id: +liteItemId,
-          qty: req.body.qty,
-          customerId: user.id,
-        },
-        repo
+
+      const error = ValidateRequest<UpdateRequestBodyInput>(
+        req.body,
+        UpdateRequestBodySchema
       );
-      res.status(200).json(response);
+
+      if (error) {
+        next(new ValidationError("Invalid request inputs."));
+      } else {
+        const response = await service.UpdateCartItem(
+          {
+            id: req.body.lineItemId,
+            qty: req.body.qty,
+            customerId: user.id,
+          },
+          repo
+        );
+        console.log("RESPONSE", response);
+        res.status(200).json(response);
+      }
     } catch (error) {
       next(error);
     }
@@ -101,7 +116,7 @@ router.delete(
       }
       const liteItemId = req.params.id;
 
-      const response = await service.DeleteCart(
+      const response = await service.DeleteCartItem(
         { customerId: user.id, id: +liteItemId },
         repo
       );

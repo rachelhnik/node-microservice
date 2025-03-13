@@ -17,6 +17,7 @@ export const HandleErrorWithLogger = (
   [NotFoundError, ValidationError, AuthorizationError].forEach(
     (typeOfError) => {
       if (error instanceof typeOfError) {
+        console.log("ERROR", error);
         reportError = false;
         status = (error as any).status; // Ensure `status` is properly typed
         data = error.message;

@@ -14,7 +14,7 @@ export const InitializeBroker = async () => {
 export const SendPaymentUpdateMessage = async (data: any) => {
   await MessageBroker.publish({
     event: PaymentEvent.CREATE_PAYMENT,
-    topic: "PaymentEvents",
+    topic: "OrderEvents",
     headers: {},
     message: data,
   });

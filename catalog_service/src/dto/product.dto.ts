@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -46,4 +47,9 @@ export class GetAllProductsRequest {
 export class IdRequest {
   @IsString()
   id: string;
+}
+
+export class GetStockRequest {
+  @IsArray()
+  ids: number[];
 }

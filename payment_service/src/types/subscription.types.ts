@@ -3,7 +3,7 @@ export enum PaymentEvent {
   UPDATE_PAYMENT = "update-payment",
 }
 
-export type TOPIC_TYPE = "OrderEvents";
+export type TOPIC_TYPE = "OrderEvents" | "PaymentEvents";
 
 export interface MessageType {
   headers?: Record<string, any>;

@@ -5,7 +5,7 @@ import { AuthorizationError, NotFoundError } from "../errors";
 import { User } from "../../dtos/user.Model";
 import { InProcessOrder } from "../../dtos/order.Model";
 
-const ORDER_BASE_URL = process.env.ORDER_BASE_URL || "http://localhost:9090";
+const ORDER_BASE_URL = process.env.ORDER_BASE_URL || "http://localhost:9052";
 
 const AUTH_SERVICE_BASE_URL =
   process.env.AUTH_SERVICE_BASE_URL || "http://localhost:9050/auth";

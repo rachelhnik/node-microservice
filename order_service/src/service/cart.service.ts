@@ -4,7 +4,6 @@ import {
   EditRequestInput,
 } from "../dtos/cartRequest.dto";
 import { CartRepositoryType } from "../respository/cart.repository";
-
 import { getProductDetails, GetStockDetails } from "../utils/broker";
 import { AuthorizationError, NotFoundError } from "../utils/errors";
 
@@ -23,7 +22,7 @@ export const CreateCart = async (
     input.productId
   );
   if (lineItem) {
-    return repo.updateCart(lineItem.id, lineItem.qty + input.qty);
+    return repo.updateCartItem(lineItem.id, lineItem.qty + input.qty);
   }
 
   return await repo.createCart(input.customerId, {
@@ -40,13 +39,13 @@ export const GetCart = async (id: number, repo: CartRepositoryType) => {
   const cart = await repo.getCart(id);
 
   if (!cart) {
-    throw new NotFoundError("cart does not exist");
+    throw new NotFoundError("Cart does not exist.");
   }
 
   const lineItems = cart.lineItems;
 
   if (!lineItems.length) {
-    throw new NotFoundError("cart items not found");
+    throw new NotFoundError("Cart items not found.");
   }
 
   const stockDetails = await GetStockDetails(
@@ -77,33 +76,51 @@ const AuthorisedCart = async (
   repo: CartRepositoryType
 ) => {
   const cart = await repo.getCart(customerId);
+
   if (!cart) {
-    throw new NotFoundError("cart does not exist");
+    throw new NotFoundError("Cart does not exist.");
   }
-  console.log("line", cart, lineItemId);
 
   const lineItem = cart.lineItems.find((item) => item.id === lineItemId);
+
   if (!lineItem) {
-    throw new AuthorizationError("you are not authorized to edit this cart");
+    throw new AuthorizationError("You are not authorized to edit this cart.");
   }
 
-  return lineItem;
+  return cart;
 };
 
-export const UpdateCart = async (
+export const UpdateCartItem = async (
   input: EditRequestInput & { customerId: number },
   repo: CartRepositoryType
 ) => {
-  await AuthorisedCart(input.id, input.customerId, repo);
-  const data = await repo.updateCart(input.id, input.qty);
-  return data;
+  const isAuthorizedCart = await AuthorisedCart(
+    input.id,
+    input.customerId,
+    repo
+  );
+  if (isAuthorizedCart) {
+    const data = await repo.updateCartItem(input.id, input.qty);
+    return data;
+  }
 };
 
-export const DeleteCart = async (
+export const DeleteCartItem = async (
   input: { id: number; customerId: number },
   repo: CartRepositoryType
 ) => {
-  await AuthorisedCart(input.id, input.customerId, repo);
-  const data = await repo.deleteCart(input.id);
-  return data;
+  const isAuthorizedCart = await AuthorisedCart(
+    input.id,
+    input.customerId,
+    repo
+  );
+  if (isAuthorizedCart) {
+    const isTheFinalItem = isAuthorizedCart.lineItems.length === 1;
+    const data = await repo.deleteCartItem(
+      input.id,
+      isAuthorizedCart.id,
+      isTheFinalItem
+    );
+    return data;
+  }
 };

@@ -1,3 +1,6 @@
+import { Static, Type } from "@sinclair/typebox";
+import { OrderStatus } from "../types/order.types";
+
 export type OrderLineItemType = {
   id?: number;
   productId: number;
@@ -30,3 +33,9 @@ export interface InProcessOrder {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export const OrderUpdateSchema = Type.Object({
+  status: Type.Enum(OrderStatus),
+});
+
+export type OrderUpdateInput = Static<typeof OrderUpdateSchema>;

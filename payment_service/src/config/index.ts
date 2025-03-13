@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-export const DB_URL = process.env.DATABASE_URL;
-export const APP_PORT = process.env.APP_PORT;
+export const APP_PORT = process.env.PORT;
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;

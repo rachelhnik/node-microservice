@@ -1,6 +1,6 @@
 import { Consumer, Kafka, logLevel, Partitioners, Producer } from "kafkajs";
 import { MessageBrokerType, MessageHandler, PublishType } from "./broker.type";
-import { MessageType, OrderEvent, TOPIC_TYPE } from "../../types";
+import { MessageType, PaymentEvent, TOPIC_TYPE } from "../../types";
 
 const CLIENT_ID = process.env.CLIENT_ID || "order-service";
 const GROUP_ID = process.env.GROUP_ID || "order-service-group";
@@ -105,7 +105,7 @@ const subscribe = async (
       if (message.key && message.value) {
         const messageInput: MessageType = {
           headers: message.headers,
-          event: message.key.toString() as OrderEvent,
+          event: message.key.toString() as PaymentEvent,
           data: message.value ? JSON.parse(message.value.toString()) : null,
         };
         await messageHandler(messageInput);

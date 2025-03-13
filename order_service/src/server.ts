@@ -1,4 +1,5 @@
 import { ExpressApp } from "./express-app";
+import { HandleUncaughtException } from "./utils";
 import { logger } from "./utils/logger";
 const PORT = process.env.PORT || 9000;
 
@@ -8,8 +9,7 @@ export const startServer = async () => {
     logger.info(`App is listening to ${PORT}`);
   });
   process.on("uncaughtException", async (err) => {
-    logger.error(err);
-    process.exit(1);
+    HandleUncaughtException(err);
   });
 };
 

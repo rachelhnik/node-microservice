@@ -1,9 +1,13 @@
-import { MessageType, TOPIC_TYPE } from "../../types/subscription.types";
+import {
+  MessageType,
+  PaymentEvent,
+  TOPIC_TYPE,
+} from "../../types/subscription.types";
 
 export interface PublishType {
   headers: Record<string, any>;
   topic: TOPIC_TYPE;
-  event: OrderEvent;
+  event: PaymentEvent;
   message: Record<string, any>;
 }
 

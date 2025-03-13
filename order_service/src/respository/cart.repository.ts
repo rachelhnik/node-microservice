@@ -7,8 +7,12 @@ import { NotFoundError } from "../utils/errors";
 export type CartRepositoryType = {
   createCart: (customerId: number, lineItem: CartLineItem) => Promise<number>;
   getCart: (id: number) => Promise<CartWithLineItems>;
-  updateCart: (id: number, qty: number) => Promise<CartLineItem>;
-  deleteCart: (id: number) => Promise<Boolean>;
+  updateCartItem: (id: number, qty: number) => Promise<CartLineItem>;
+  deleteCartItem: (
+    id: number,
+    cartId: number,
+    isTheFinalItem: boolean
+  ) => Promise<Boolean>;
   clearCartData: (id: number) => Promise<Boolean>;
   findCartByProductId: (
     customerId: number,
@@ -29,6 +33,7 @@ const createCart = async (
       target: carts.customerId,
       set: { updatedAt: new Date() },
     });
+
   const [{ id }] = result;
   if (id > 0) {
     await DB.insert(cartLineItems).values({
@@ -51,12 +56,15 @@ const getCart = async (id: number): Promise<CartWithLineItems> => {
   });
 
   if (!cart) {
-    throw new NotFoundError("cart not found");
+    throw new NotFoundError("Cart not found.");
   }
 
   return cart;
 };
-const updateCart = async (id: number, qty: number): Promise<CartLineItem> => {
+const updateCartItem = async (
+  id: number,
+  qty: number
+): Promise<CartLineItem> => {
   const [cartLineItem] = await DB.update(cartLineItems)
     .set({
       qty: qty,
@@ -66,13 +74,21 @@ const updateCart = async (id: number, qty: number): Promise<CartLineItem> => {
   return cartLineItem;
 };
 
-const deleteCart = async (id: number): Promise<boolean> => {
+const deleteCartItem = async (
+  id: number,
+  cartId: number,
+  isTheFinalItem: boolean
+): Promise<boolean> => {
   await DB.delete(cartLineItems).where(eq(cartLineItems.id, id)).returning();
+  if (isTheFinalItem) {
+    await DB.delete(carts).where(eq(carts.id, cartId)).returning();
+  }
   return true;
 };
 
 const clearCartData = async (id: number): Promise<boolean> => {
-  await DB.delete(carts).where(eq(carts.id, id)).returning();
+  const a = await DB.delete(carts).where(eq(carts.id, id)).returning();
+
   return true;
 };
 
@@ -95,8 +111,8 @@ const findCartByProductId = async (
 export const CartRespository: CartRepositoryType = {
   createCart,
   getCart,
-  updateCart,
-  deleteCart,
+  updateCartItem,
+  deleteCartItem,
   clearCartData,
   findCartByProductId,
 };

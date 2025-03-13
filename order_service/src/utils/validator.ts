@@ -5,6 +5,7 @@ const ajv = new Ajv();
 
 export const ValidateRequest = <T>(reqBody: unknown, schema: Schema) => {
   const validatedData = ajv.compile<T>(schema);
+  console.log("validate", validatedData, reqBody);
 
   if (validatedData(reqBody)) {
     return false;

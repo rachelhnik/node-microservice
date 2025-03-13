@@ -6,12 +6,18 @@ import {
   CreateProductRequest,
   EditProductRequest,
   GetAllProductsRequest,
+  GetStockRequest,
   IdRequest,
 } from "../dto/product.dto";
+import { BrokerService } from "../services/broker.service";
 
 const router = express.Router();
 
 export const catalogService = new CatalogService(new CatalogRepository());
+
+const brokerService = new BrokerService(catalogService);
+
+brokerService.initializeBroker();
 
 router.post(
   "/products",
@@ -56,8 +62,9 @@ router.patch(
 router.get(
   "/products",
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    const limit = Number(req.query["limit"]);
-    const offset = Number(req.query["offset"]);
+    const limit = req.query["limit"] ? Number(req.query["limit"]) : 20;
+    const offset = req.query["offset"] ? Number(req.query["offset"]) : 0;
+
     try {
       const { errors, input } = await RequestValidator(
         GetAllProductsRequest,
@@ -95,6 +102,13 @@ router.post(
   "/products/stock",
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
+      const { errors, input } = await RequestValidator(
+        GetStockRequest,
+        req.body
+      );
+      if (errors) {
+        return res.status(400).json(errors);
+      }
       const data = await catalogService.getProductStock(req.body.ids);
       return res.status(200).json(data);
     } catch (error) {

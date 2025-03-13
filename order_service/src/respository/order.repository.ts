@@ -2,10 +2,14 @@ import { eq } from "drizzle-orm";
 import { DB } from "../db/db.connection";
 import { orderLineItems, orders } from "../db/schema";
 import { OrderWithLineItems } from "../dtos/orderRequest.dto";
+import { NotFoundError } from "../utils";
 
 export type OrderRepositoryType = {
   createOrder: (lineItem: OrderWithLineItems) => Promise<number>;
   findOrder: (id: number) => Promise<OrderWithLineItems | null>;
+  findOrderByOrderNumber: (
+    orderNumber: number
+  ) => Promise<OrderWithLineItems | null>;
   updateOrder: (id: number, status: string) => Promise<OrderWithLineItems>;
   deleteOrder: (id: number) => Promise<boolean>;
   findOrdersByCustomerId: (customerId: number) => Promise<OrderWithLineItems[]>;
@@ -41,7 +45,6 @@ const createOrder = async (lineItem: OrderWithLineItems): Promise<number> => {
 };
 
 const findOrder = async (id: number): Promise<OrderWithLineItems | null> => {
-  console.log("ID", id);
   const order = await DB.query.orders.findFirst({
     where: (orders, { eq }) => eq(orders.id, id),
     with: {
@@ -50,7 +53,24 @@ const findOrder = async (id: number): Promise<OrderWithLineItems | null> => {
   });
 
   if (!order) {
-    throw new Error("Order not found");
+    throw new NotFoundError("Order not found.");
+  }
+
+  return order as unknown as OrderWithLineItems;
+};
+
+const findOrderByOrderNumber = async (
+  orderNumber: number
+): Promise<OrderWithLineItems | null> => {
+  const order = await DB.query.orders.findFirst({
+    where: (orders, { eq }) => eq(orders.orderNumber, orderNumber),
+    with: {
+      lineItems: true,
+    },
+  });
+
+  if (!order) {
+    throw new NotFoundError("Order not found.");
   }
 
   return order as unknown as OrderWithLineItems;
@@ -69,27 +89,27 @@ const updateOrder = async (
 
   const order = await findOrder(id);
   if (!order) {
-    throw new Error("Order not found");
+    throw new NotFoundError("Order not found.");
   }
   return order;
 };
 
 const deleteOrder = async (id: number): Promise<boolean> => {
+  await findOrder(id);
   await DB.delete(orders).where(eq(orders.id, id)).execute();
+
   return true;
 };
 
 const findOrdersByCustomerId = async (
   customerId: number
 ): Promise<OrderWithLineItems[]> => {
-  console.log("customer", customerId);
   const orders = await DB.query.orders.findMany({
     where: (orders, { eq }) => eq(orders.customerId, customerId),
     with: {
       lineItems: true,
     },
   });
-  console.log("orders", orders);
 
   return orders as unknown as OrderWithLineItems[];
 };
@@ -97,6 +117,7 @@ const findOrdersByCustomerId = async (
 export const OrderRepository: OrderRepositoryType = {
   createOrder,
   findOrder,
+  findOrderByOrderNumber,
   updateOrder,
   deleteOrder,
   findOrdersByCustomerId,

@@ -13,6 +13,9 @@ export class MockCatalogRepository implements ICatalogRepository {
   update(data: Product): Promise<Product> {
     return Promise.resolve(data);
   }
+  findStock(ids: number[]): Promise<Product[]> {
+    return Promise.resolve([]);
+  }
   delete(id: any) {
     return Promise.resolve(id);
   }

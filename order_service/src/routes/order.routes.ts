@@ -6,6 +6,8 @@ import { CartRespository } from "../respository/cart.repository";
 import { RequestAuthorizer } from "./middleware";
 import * as service from "../service/order.service";
 import { OrderStatus } from "../types/order.types";
+import { ValidateRequest, ValidationError } from "../utils";
+import { OrderUpdateInput, OrderUpdateSchema } from "../dtos/orderRequest.dto";
 
 const repo = OrderRepository;
 const cartRepo = CartRespository;
@@ -94,10 +96,19 @@ router.patch(
         next(new Error("User not found"));
         return;
       }
-      const orderId = parseInt(req.params.id);
-      const status = req.body.status as OrderStatus;
-      const response = await service.UpdateOrder(orderId, status, repo);
-      res.status(200).json(response);
+      const error = ValidateRequest<OrderUpdateInput>(
+        req.body,
+        OrderUpdateSchema
+      );
+
+      if (error) {
+        next(new ValidationError("Invalid request inputs."));
+      } else {
+        const orderId = parseInt(req.params.id);
+        const status = req.body.status as OrderStatus;
+        const response = await service.UpdateOrder(orderId, status, repo);
+        res.status(200).json(response);
+      }
     } catch (error) {
       next(error);
     }
@@ -127,8 +138,8 @@ router.get(
   "/orders/:id/checkout",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const orderId = Number(req.params.id);
-      const orderDetails = await service.CheckoutOrder(orderId, repo);
+      const orderNumber = Number(req.params.id);
+      const orderDetails = await service.CheckoutOrder(orderNumber, repo);
       res.status(200).json(orderDetails);
     } catch (error) {
       next(error);

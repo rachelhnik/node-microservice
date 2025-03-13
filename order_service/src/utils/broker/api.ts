@@ -5,7 +5,7 @@ import { AuthorizationError, NotFoundError } from "../errors";
 import { User } from "../../dtos/user.Model";
 
 const CATALOG_BASE_URL =
-  process.env.CATALOG_BASE_URL || "http://localhost:8000";
+  process.env.CATALOG_BASE_URL || "http://localhost:9051";
 
 const AUTH_SERVICE_BASE_URL =
   process.env.AUTH_SERVICE_BASE_URL || "http://localhost:9050/auth";
