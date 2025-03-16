@@ -11,6 +11,10 @@ export type OrderRepositoryType = {
     orderNumber: number
   ) => Promise<OrderWithLineItems | null>;
   updateOrder: (id: number, status: string) => Promise<OrderWithLineItems>;
+  updateOrderByOrderNumber: (
+    orderNumber: number,
+    status: string
+  ) => Promise<boolean>;
   deleteOrder: (id: number) => Promise<boolean>;
   findOrdersByCustomerId: (customerId: number) => Promise<OrderWithLineItems[]>;
 };
@@ -30,9 +34,11 @@ const createOrder = async (lineItem: OrderWithLineItems): Promise<number> => {
 
   if (id > 0) {
     for (const item of lineItem.orderItems) {
+      console.log("item", item);
       await DB.insert(orderLineItems)
         .values({
           orderId: id,
+          itemId: item.productId,
           itemName: item.itemName,
           price: item.price,
           qty: item.qty,
@@ -72,6 +78,7 @@ const findOrderByOrderNumber = async (
   if (!order) {
     throw new NotFoundError("Order not found.");
   }
+  console.log("**", order);
 
   return order as unknown as OrderWithLineItems;
 };
@@ -92,6 +99,21 @@ const updateOrder = async (
     throw new NotFoundError("Order not found.");
   }
   return order;
+};
+
+const updateOrderByOrderNumber = async (
+  orderNumber: number,
+  status: string
+): Promise<boolean> => {
+  console.log("HIII", orderNumber, status);
+  await DB.update(orders)
+    .set({
+      status: status,
+    })
+    .where(eq(orders.orderNumber, orderNumber))
+    .execute();
+
+  return true;
 };
 
 const deleteOrder = async (id: number): Promise<boolean> => {
@@ -119,6 +141,7 @@ export const OrderRepository: OrderRepositoryType = {
   findOrder,
   findOrderByOrderNumber,
   updateOrder,
+  updateOrderByOrderNumber,
   deleteOrder,
   findOrdersByCustomerId,
 };

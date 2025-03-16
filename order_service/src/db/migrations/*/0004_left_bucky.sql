@@ -1,0 +1,1 @@
+ALTER TABLE "order_line_items" ADD COLUMN "item_id" integer NOT NULL;

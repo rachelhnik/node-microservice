@@ -3,17 +3,17 @@ import { RequestAuthorizer } from "./middleware";
 const router = express.Router();
 import * as service from "../service/payment.service";
 import { PaymentGateway } from "../types";
-import { StripePayment } from "../utils";
+import { NotFoundError, StripePayment } from "../utils";
 
 const paymentGateway: PaymentGateway = StripePayment;
-console.log("pm", paymentGateway);
+
 router.post(
   "/create-payment",
   RequestAuthorizer,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
     if (!user) {
-      next(new Error(" User not found. "));
+      next(new NotFoundError(" User not found. "));
       return;
     }
     try {
@@ -36,12 +36,12 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
     if (!user) {
-      next(new Error(" User not found. "));
+      next(new NotFoundError("User not found."));
       return;
     }
     const paymentId = req.params.id;
     if (!paymentId) {
-      next(new Error("Payment Id not found."));
+      next(new NotFoundError("Payment Id not found."));
       return;
     }
     try {

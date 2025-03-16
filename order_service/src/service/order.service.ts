@@ -1,14 +1,22 @@
-import { OrderRepositoryType } from "../respository/order.repository";
+import {
+  OrderRepository,
+  OrderRepositoryType,
+} from "../respository/order.repository";
 import { CartRepositoryType } from "../respository/cart.repository";
-import { OrderStatus } from "../types/order.types";
+import { OrderStatus, PaymentStatus } from "../types/order.types";
 import {
   InProcessOrder,
   OrderLineItemType,
   OrderWithLineItems,
 } from "../dtos/orderRequest.dto";
-import { MessageType } from "../types";
-import { SendCreateOrderMessage } from "./broker.service";
+import { MessageType, OrderEvent } from "../types";
+import {
+  SendCreateOrderMessage,
+  SendOrderCanceledMessage,
+} from "./broker.service";
 import { GetStockDetails, NotFoundError } from "../utils";
+
+const orderRepo = OrderRepository;
 
 export const CreateOrder = async (
   userId: number,
@@ -63,8 +71,8 @@ export const CreateOrder = async (
 
   await repo.createOrder(orderInput);
   await cartRepo.clearCartData(cart.id);
-  // console.log("Order created", order);
-  // fire a message to subscription service [catalog service] to update stock
+
+  //event sent to catalog service to update stock
   await SendCreateOrderMessage(orderInput);
 
   // return success message
@@ -76,9 +84,13 @@ export const UpdateOrder = async (
   status: string,
   repo: OrderRepositoryType
 ) => {
-  await repo.updateOrder(orderId, status);
+  const orderData = await repo.updateOrder(orderId, status);
   if (status === OrderStatus.CANCELLED) {
-    // await repo.publishOrderEvent(order, "ORDER_CANCELLED");
+    const data = orderData?.lineItems?.map((item) => {
+      return { id: item.productId, stock: item.qty };
+    });
+
+    await SendOrderCanceledMessage(data);
   }
   return { message: "Order updated successfully" };
 };
@@ -107,8 +119,35 @@ export const DeleteOrder = async (
 };
 
 export const HandleSubscription = async (message: MessageType) => {
-  console.log("Message received by order Kafka consumer", message);
-  // if (message.event === OrderEvent.ORDER_UPDATED) {
+  if (message.event === OrderEvent.CREATE_PAYMENT) {
+    switch (message.data.status) {
+      case PaymentStatus.SUCCEEDED:
+        await orderRepo.updateOrderByOrderNumber(
+          message.data.orderNumber,
+          OrderStatus.COMPLETED
+        );
+        break;
+
+      case PaymentStatus.CANCELLED:
+        await orderRepo.updateOrderByOrderNumber(
+          message.data.orderNumber,
+          OrderStatus.CANCELLED
+        );
+        const orderData = await orderRepo.findOrderByOrderNumber(
+          message.data.orderNumber
+        );
+        const data = orderData?.lineItems?.map((item) => {
+          return { id: item.itemId, stock: item.qty };
+        });
+        //event sent to catalog service to update stock
+        await SendOrderCanceledMessage(data);
+
+        break;
+
+      default:
+        break;
+    }
+  }
   // call create order
 };
 

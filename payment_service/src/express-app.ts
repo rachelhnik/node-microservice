@@ -18,7 +18,6 @@ export const ExpressApp = async () => {
   app.use(express.json());
   app.use(httpLogger);
   dotenv.config();
-  console.log("Stripe Secret Key:", process.env.STRIPE_SECRET_KEY);
   await InitializeBroker();
   app.use(router);
   app.use("/", (req: Request, res: Response, _: NextFunction) => {

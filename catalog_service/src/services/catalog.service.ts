@@ -1,5 +1,5 @@
 import { ICatalogRepository } from "../interface/catalogRepository.interface";
-import { OrderWithLineItems } from "../types";
+import { CatalogEvent, OrderWithLineItems } from "../types";
 
 export class CatalogService {
   private _repository: ICatalogRepository;
@@ -55,16 +55,29 @@ export class CatalogService {
 
   async handleBrokerMessage(message: any) {
     console.log("Catalog service receives event", message);
-    const orderdata = message.data as OrderWithLineItems;
-    const { orderItems } = orderdata;
-    orderItems.forEach(async (item) => {
-      console.log("Updating stock for item", item.productId, item.qty);
-      const product = await this.getSingleProduct(item.productId);
-      if (!product) {
-        throw new Error("product not found.");
-      }
-      const updatedStock = product.stock - item.qty;
-      await this.updateProduct({ ...product, stock: updatedStock });
-    });
+    if (message.event === CatalogEvent.CREATE_ORDER) {
+      const orderdata = message.data as OrderWithLineItems;
+      const { orderItems } = orderdata;
+      orderItems.forEach(async (item) => {
+        console.log("Updating stock for item", item.productId, item.qty);
+        const product = await this.getSingleProduct(item.productId);
+        if (!product) {
+          throw new Error("product not found.");
+        }
+        const updatedStock = product.stock - item.qty;
+        await this.updateProduct({ ...product, stock: updatedStock });
+      });
+    } else if (message.event === CatalogEvent.CANCEL_ORDER) {
+      const { data } = message;
+      console.log("DATA", data);
+      data.forEach(async (item: { id: number; stock: number }) => {
+        const product = await this.getSingleProduct(item.id);
+        if (!product) {
+          throw new Error("product not found.");
+        }
+        const updatedStock = product.stock + item.stock;
+        await this.updateProduct({ ...product, stock: updatedStock });
+      });
+    }
   }
 }

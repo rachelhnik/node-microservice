@@ -4,3 +4,11 @@ export enum OrderStatus {
   COMPLETED = "completed",
   CANCELLED = "cancelled",
 }
+
+export enum PaymentStatus {
+  SUCCEEDED = "succeeded",
+  INCOMPLETE = "incomplete",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+  UNCAPTURED = "uncaptured",
+}

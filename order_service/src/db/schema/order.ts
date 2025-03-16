@@ -24,6 +24,7 @@ export type Order = InferSelectModel<typeof orders>;
 export const orderLineItems = pgTable("order_line_items", {
   id: serial("id").primaryKey(),
   itemName: varchar("item_name").notNull(),
+  itemId: integer("item_id").notNull(),
   qty: integer("qty").notNull(),
   price: numeric("amount").notNull(),
   orderId: integer("order_id")

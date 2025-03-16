@@ -1,5 +1,5 @@
 import { PaymentGateway } from "../types";
-import { GetOrderDetails } from "../utils";
+import { GetOrderDetails, ValidationError } from "../utils";
 import { SendPaymentUpdateMessage } from "./broker.service";
 
 export const CreatePayment = async (
@@ -10,7 +10,7 @@ export const CreatePayment = async (
   //get order details from order service
   const orderDetails = await GetOrderDetails(orderNumber);
   if (orderDetails.customerId !== userId) {
-    throw new Error("User is not authorized to create payment.");
+    throw new ValidationError("User is not authorized to create payment.");
   }
   // console.log("details", orderDetails);
   const amountInCents = orderDetails.amount * 100;
@@ -24,10 +24,7 @@ export const CreatePayment = async (
     amountInCents,
     orderMetaData
   );
-  console.log("res", paymentResponse);
-  // create a new payment record
-  // call payment gateway to create payment
-  // return payment secrets
+
   return {
     secret: paymentResponse.secret,
     pubKey: paymentResponse.pubKey,
@@ -40,19 +37,23 @@ export const VerifyPayment = async (
   paymentGateway: PaymentGateway
 ) => {
   // call payment gateway to verify payment
-  const paymentResponse = await paymentGateway.getPayment(paymentId);
-  console.log("response", paymentResponse.status, paymentResponse.paymentLog);
+  const paymentResponse = (await paymentGateway.getPayment(
+    paymentId
+  )) as unknown as any;
+
+  const metadata = paymentResponse.paymentLog.metadata;
   // update order status through message broker
-  const response = await SendPaymentUpdateMessage({
-    orderNumber: 661948,
-    status: paymentResponse.status,
+  await SendPaymentUpdateMessage({
+    //orderNumber: +metadata.orderNumber,
+    orderNumber: 748956,
+    //status: paymentResponse.status,
+    status: "cancelled",
     paymentLog: paymentResponse.paymentLog,
   });
-  console.log(">>>", response);
+
   return {
     message: "Payment verified.",
     status: paymentResponse.status,
     paymentLog: paymentResponse.paymentLog,
   };
-  // return payment status <= not necessary, just for response to frontend
 };
