@@ -2,9 +2,11 @@ import { Consumer, Kafka, logLevel, Partitioners, Producer } from "kafkajs";
 import { MessageBrokerType, MessageHandler, PublishType } from "./broker.type";
 import { MessageType, CatalogEvent, TOPIC_TYPE } from "../../types";
 
+console.log("All environment variables:", process.env);
 const CLIENT_ID = process.env.CLIENT_ID || "catalog-service";
 const GROUP_ID = process.env.GROUP_ID || "catalog-service-group";
-const BROKERS = [process.env.BROKER_1 || "localhost:9090"];
+const BROKERS = [process.env.BROKER_1 || "localhost:9092"];
+console.log("Kafka brokers configured:", BROKERS);
 
 const kafka = new Kafka({
   clientId: CLIENT_ID,

@@ -4,8 +4,9 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon server.ts",
-    "build": "prisma generate && prisma migrate deploy && tsc -p ."
+    "dev": "prisma generate && prisma migrate deploy && nodemon server.ts",
+    "build": " tsc -p .",
+    "start": "prisma generate && prisma migrate deploy && nodemon dist/server.js"
   },
   "keywords": [],
   "author": "",

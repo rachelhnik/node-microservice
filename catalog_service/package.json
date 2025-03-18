@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "dev": "nodemon src/server.ts",
-    "start": "nodemon dist/server.js",
-    "build": "prisma generate && prisma migrate deploy && tsc -p ."
+    "dev": "prisma generate && prisma migrate deploy && nodemon src/server.ts",
+    "start": " prisma generate && prisma migrate deploy && nodemon dist/server.js",
+    "build": "tsc -p ."
   },
   "keywords": [],
   "author": "",

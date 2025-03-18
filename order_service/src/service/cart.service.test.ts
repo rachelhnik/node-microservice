@@ -17,6 +17,7 @@ describe("Cart Service", () => {
   it("should return correct data while creating cart", async () => {
     const mockCart = {
       productId: 123,
+      customerId: 2,
       qty: 3,
     };
 

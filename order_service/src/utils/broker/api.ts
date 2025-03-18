@@ -33,6 +33,7 @@ export const GetStockDetails = async (ids: number[]) => {
 };
 
 export const validateUser = async (token: string) => {
+  console.log("auth url", AUTH_SERVICE_BASE_URL);
   try {
     const response = await axios.get(`${AUTH_SERVICE_BASE_URL}/validate`, {
       headers: {

@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "dev": "nodemon src/server.ts",
+    "dev": " nodemon src/server.ts",
+    "build": "tsc -p .",
+    "start": "drizzle-kit generate && drizzle-kit migrate && nodemon --legacy-watch dist/server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",

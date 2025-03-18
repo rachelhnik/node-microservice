@@ -7,7 +7,13 @@ export class CatalogRepository implements ICatalogRepository {
   _prisma: PrismaClient;
 
   constructor() {
-    this._prisma = new PrismaClient();
+    this._prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL, // Explicitly use the env var
+        },
+      },
+    });
   }
   create(data: Product): Promise<Product> {
     return this._prisma.product.create({ data });

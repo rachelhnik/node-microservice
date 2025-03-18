@@ -1,0 +1,203 @@
+version: "3"
+
+services:
+  #######################
+  ######    DB   ########
+  #######################
+
+  catalog_db:
+    container_name: catalog_db
+    image: "postgres:14.0"
+    ports:
+      - 5432:5432
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: catalog_db
+      POSTGRES_PASSWORD: catalog_db_password
+      POSTGRES_DB: catalog_service
+    volumes:
+      - catalog_db:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  order_db:
+    container_name: order_db
+    image: "postgres:14.0"
+    ports:
+      - 5436:5432
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: order_db
+      POSTGRES_PASSWORD: order_db_password
+      POSTGRES_DB: order_service
+    volumes:
+      - order_db:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user_db:
+    container_name: user_db
+    image: "postgres:14.0"
+    ports:
+      - "5439:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: user_db
+      POSTGRES_PASSWORD: user_db_password
+      POSTGRES_DB: user_service
+    volumes:
+      - user_db:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  #######################
+  ######   KAFKA   ######
+  #######################
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - microservices-network
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9090"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9090"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9090:9090"
+    networks:
+      - microservices-network
+
+  #######################
+  ######  SERVICES ######
+  #######################
+
+  user_service:
+    container_name: user_service
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+      args:
+        - JWT_SECRET=user_service_secret
+        - PORT=9050
+        - DATABASE_URL=postgresql://user_db:user_db_password@user_db:5432/user_service?schema=public
+        - KAFKA_BROKER=kafka:9090
+    depends_on:
+      user_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+    ports:
+      - "9050:9050"
+    networks:
+      - microservices-network
+
+  catalog_service:
+    container_name: catalog_service
+    build:
+      context: ./catalog_service
+      dockerfile: Dockerfile
+      args:
+        - PORT=9051
+        - DATABASE_URL=postgresql://catalog_db:catalog_db_password@catalog_db:5432/catalog_service?schema=public
+    environment:
+      - BROKER_1=kafka:9090
+    depends_on:
+      catalog_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - 9051:9051
+    networks:
+      - microservices-network
+
+  order_service:
+    container_name: order_service
+    build:
+      context: ./order_service
+      dockerfile: Dockerfile
+      args:
+        - PORT=9052
+        - DATABASE_URL=postgresql://order_db:order_db_password@order_db:5432/order_service?schema=public
+    environment:
+      - BROKER_1=kafka:9090
+      - CATALOG_BASE_URL=http://catalog_service:9051
+      - AUTH_SERVICE_BASE_URL=http://user_service:9050/auth
+      - CLIENT_ID=order-service
+      - GROUP_ID=order-service-group
+    depends_on:
+      order_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - 9052:9052
+    networks:
+      - microservices-network
+
+  payment_service:
+    container_name: payment_service
+    build:
+      context: ./payment_service
+      dockerfile: Dockerfile
+      args:
+        - PORT=9053
+
+    environment:
+      - BROKER_1=kafka:9090
+      - ORDER_BASE_URL=http://order_service:9052
+      - AUTH_SERVICE_BASE_URL=http://user_service:9050/auth
+      - CLIENT_ID=order-service
+      - GROUP_ID=order-service-group
+    depends_on:
+      order_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - 9053:9053
+    networks:
+      - microservices-network
+
+volumes:
+  catalog_db:
+  user_db:
+  order_db:
+
+networks:
+  microservices-network:
+    driver: bridge
