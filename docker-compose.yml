@@ -17,6 +17,9 @@ services:
       POSTGRES_USER: catalog_db
       POSTGRES_PASSWORD: catalog_db_password
       POSTGRES_DB: catalog_service
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 256MB
+      POSTGRES_WORK_MEM: 4MB
     volumes:
       - catalog_db:/var/lib/postgresql/data
     networks:
@@ -38,6 +41,9 @@ services:
       POSTGRES_USER: order_db
       POSTGRES_PASSWORD: order_db_password
       POSTGRES_DB: order_service
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 256MB
+      POSTGRES_WORK_MEM: 4MB
     volumes:
       - order_db:/var/lib/postgresql/data
     networks:
@@ -60,6 +66,9 @@ services:
       POSTGRES_USER: user_db
       POSTGRES_PASSWORD: user_db_password
       POSTGRES_DB: user_service
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 256MB
+      POSTGRES_WORK_MEM: 4MB
     volumes:
       - user_db:/var/lib/postgresql/data
     networks:
@@ -95,6 +104,7 @@ services:
       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9090"
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9090"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 24
     ports:
       - "9090:9090"
     networks:
@@ -119,9 +129,9 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-
     ports:
       - "9050:9050"
+    restart: always
     networks:
       - microservices-network
 
@@ -142,6 +152,7 @@ services:
         condition: service_started
     ports:
       - 9051:9051
+    restart: always
     networks:
       - microservices-network
 
@@ -166,6 +177,7 @@ services:
         condition: service_started
     ports:
       - 9052:9052
+    restart: always
     networks:
       - microservices-network
 
@@ -190,13 +202,20 @@ services:
         condition: service_started
     ports:
       - 9053:9053
+    restart: always
     networks:
       - microservices-network
 
 volumes:
   catalog_db:
+    driver_opts:
+      size: "1G"
   user_db:
+    driver_opts:
+      size: "1G"
   order_db:
+    driver_opts:
+      size: "1G"
 
 networks:
   microservices-network:
